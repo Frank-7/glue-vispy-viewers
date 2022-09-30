@@ -5,6 +5,7 @@ from .viewer_state import Vispy3DScatterViewerState
 
 from ..common import tools as _tools, selection_tools  # noqa
 from . import scatter_toolbar  # noqa
+from . import scatter_toolbar_cloud  # noqa
 
 
 class VispyScatterViewer(BaseVispyViewer):
@@ -15,7 +16,7 @@ class VispyScatterViewer(BaseVispyViewer):
     _layer_style_widget_cls = ScatterLayerStyleWidget
 
     tools = BaseVispyViewer.tools + ['vispy:lasso', 'vispy:rectangle',
-                                     'vispy:circle', 'scatter3d:point']
+                                     'vispy:circle', 'scatter3d:point', 'scatter3d:cloud_point']
 
     _data_artist_cls = ScatterLayerArtist
     _subset_artist_cls = ScatterLayerArtist

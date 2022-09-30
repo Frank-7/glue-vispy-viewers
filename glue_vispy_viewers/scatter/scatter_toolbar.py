@@ -55,7 +55,7 @@ class PointSelectionMode(VispyMouseMode):
 
     icon = 'glue_point'
     tool_id = 'scatter3d:point'
-    action_text = 'Select points using a point selection'
+    action_text = 'Select multiple points using a point selection'
 
     def press(self, event):
         if event.button == 1:

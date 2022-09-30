@@ -10,32 +10,40 @@ class KDEROI(Projected3dROI):
     A region of interest for our KDE.
     """
 
-    def __init__(self, x, y, projection_matrix=None):
+    def __init__(self, x, y, data, projection_matrix=None):
         super(KDEROI, self).__init__()
         self.x = x
         self.y = y
         self.projection_matrix = projection_matrix
 
+        # Create the KDE
+        x, y, z = data
+        self.indices = np.isfinite(x) & np.isfinite(y) & np.isfinite(z)
+        xm, ym, zm = x[self.indices], y[self.indices], z[self.indices]
+        self.kde = gaussian_kde([xm, ym, zm])
+        self.overall = self.kde([xm, ym, zm])
+
     def defined(self):
         return True
 
+    def set_xy(self, x, y):
+        self.x = x
+        self.y = y
+
     def contains3d(self, x, y, z):
-        x = np.copy(np.asarray(x))
-        y = np.copy(np.asarray(y))
-        z = np.copy(np.asarray(z))
+        x = np.asarray(x)
+        y = np.asarray(y)
+        z = np.asarray(z)
 
         # This seemed like a good idea
         # but results in a mask that isn't the same shape as the data
-        # (which i very bad!)
+        # (which is very bad!)
         # indices = np.isfinite(x) & np.isfinite(y) & np.isfinite(z)
         # x = x[indices]
         # y = y[indices]
         # z = z[indices]
 
-        indices = np.logical_not(np.isfinite(x) & np.isfinite(y) & np.isfinite(z))
-        x[indices] = 0
-        y[indices] = 0
-        z[indices] = 0
+        mask = np.zeros(x.shape, dtype=bool)
 
         min_dist = np.inf
         closest_pt = None
@@ -54,20 +62,16 @@ class KDEROI(Projected3dROI):
             screen_x, screen_y = screen_h[:2] / screen_h[3]
 
             d = np.hypot(self.x - screen_x, self.y - screen_y)
-            idx = np.unravel_index(np.argmin(d), shape=d.shape)
+            idx = np.unravel_index(np.nanargmin(d), shape=d.shape)
             dist = d[idx]
             if dist < min_dist:
                 min_dist = dist
                 closest_pt = (x_sub[idx], y_sub[idx], z_sub[idx])
 
-        kde = gaussian_kde([x, y, z])
-
-        threshold = 0.0001
-        overall = kde([x, y, z])
-        at_pt = kde(closest_pt)
-        diff = overall - at_pt
-        mask = np.abs(diff) < threshold
-        mask[indices] = False
+        threshold = 0.01
+        at_pt = self.kde(closest_pt)
+        diff = self.overall - at_pt
+        mask[self.indices] = np.abs(diff) < threshold
         return mask
 
 

@@ -4,7 +4,10 @@ This is for 3D selection in Glue 3d scatter plot viewer.
 
 import numpy as np
 
+from echo import add_callback
 from glue.config import viewer_tool
+from glue.core.hub import HubListener
+from glue.core.message import NumericalDataChangedMessage
 from glue.core.roi import Roi, Projected3dROI
 from .kde_roi import KDEROI
 
@@ -52,16 +55,56 @@ class NearestNeighborROI(Roi):
 
 
 @viewer_tool
-class PointSelectionMode(VispyMouseMode):
+class PointSelectionMode(VispyMouseMode, HubListener):
 
     icon = 'glue_cloud_points'
     tool_id = 'scatter3d:cloud_point'
     action_text = 'Select cloud points using a point selection'
 
+    def __init__(self, viewer):
+        super(PointSelectionMode, self).__init__(viewer)
+        self.roi = None
+        self.stale = True
+        add_callback(self.viewer.state, 'x_att', self.mark_stale)
+        add_callback(self.viewer.state, 'y_att', self.mark_stale)
+        add_callback(self.viewer.state, 'z_att', self.mark_stale)
+
+    def _ndc_message_filter(self, msg):
+        data = msg.sender
+        have_data = data in [layer.layer for layer in self.viewer.layers]
+        if not have_data:
+            return False
+
+        viewer_state = self.viewer.state
+        have_attribute = msg.attribute in [viewer_state.x_att, viewer_state.y_att, viewer_state.z_att]
+        return have_attribute
+
+    def register_to_hub(self, hub):
+        self.hub = hub
+        self.hub.subscribe(self, NumericalDataChangedMessage, filter=self._ndc_message_filter, handler=self.mark_stale)
+
+    def unregister(self, hub):
+        self.hub.unsubscribe(self, NumericalDataChangedMessage)
+        self.hub = None
+
+    def notify(self, message):
+        self.hub.broadcast(message)
+
+    def mark_stale(self, _arg=None):
+        self.stale = True
+
     def press(self, event):
         if event.button == 1:
-            roi = KDEROI(event.pos[0], event.pos[1], self.projection_matrix)
-            self.apply_roi(roi)
+            if self.stale:
+                # For now, we're only thinking about one layer
+                # For the future - think about how to handle more
+                layer = self.viewer.layers[0].layer
+                data = [layer[self.viewer.state.x_att], layer[self.viewer.state.y_att], layer[self.viewer.state.z_att]]
+                self.roi = KDEROI(event.pos[0], event.pos[1], data=data, projection_matrix=self.projection_matrix)
+                self.stale = False
+            else:
+                self.roi.set_xy(event.pos[0], event.pos[1])
+            self.apply_roi(self.roi)
 
     def release(self, event):
         pass
