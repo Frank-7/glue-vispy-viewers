@@ -15,7 +15,8 @@ class VispyScatterViewer(BaseVispyViewer):
     _layer_style_widget_cls = ScatterLayerStyleWidget
 
     tools = BaseVispyViewer.tools + ['vispy:lasso', 'vispy:rectangle',
-                                     'vispy:circle', 'scatter3d:point']
+                                     'vispy:circle', 'scatter3d:point',
+                                     'scatter3d:autoseg']
 
     _data_artist_cls = ScatterLayerArtist
     _subset_artist_cls = ScatterLayerArtist
