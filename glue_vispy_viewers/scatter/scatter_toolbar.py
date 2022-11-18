@@ -103,19 +103,19 @@ class BaseAutoFacetTool(Tool):
                 return
 
         data = layer_artist.layer
-        input_data = self._input_data(data)
-        labels = self._facets(input_data)
+        labels = self._facets(data)
         subset_count = np.max(labels) + 1
         data.add_component(labels, self.facet_component)
         subsets = facet_subsets(self.viewer._data, cid=data.id[self.facet_component], steps=subset_count)
         colorize_subsets(subsets, matplotlib.cm.get_cmap("plasma"))
 
 
-@viewer_tool
-class DBSCANAutoFacetTool(BaseAutoFacetTool):
-    icon = 'glue_rainbow'  # TODO: Figure out how to add an icon
-    tool_id = 'scatter3d:facet_dbscan'
-    action_text = 'Automatically facet a data layer'
+class SKLAutoFacetTool(BaseAutoFacetTool):
+
+    def __init__(self, viewer, model_cls, dialog_cls):
+        super(SKLAutoFacetTool, self).__init__(viewer)
+        self._model_cls = model_cls
+        self._dialog_cls = dialog_cls
 
     def _input_data(self, data):
         viewer_state = self.viewer.state
@@ -126,33 +126,32 @@ class DBSCANAutoFacetTool(BaseAutoFacetTool):
         ).transpose()
         return input_data
 
-    def _facets(self, input_data, **kwargs):
-        method = DBSCAN  # Later, make this an option
-        params = dict(eps=2.5, min_samples=2)
-        model = method(**params)
+    def _get_params(self):
+        params = {}
+        dialog = self._dialog_cls(params)
+        dialog.exec_()
+        return params
+
+    def _facets(self, data, **kwargs):
+        input_data = self._input_data(data)
+        params = self._get_params()
+        model = self._model_cls(**params)
         model.fit(input_data)
         return model.labels_
 
-    def activate(self):
 
-        # Get the values of the currently active layer artist - we
-        # specifically pick the layer artist that is selected in the layer
-        # artist view in the left since we have to pick one.
-        layer_artist = self.viewer._view.layer_list.current_artist()
+@viewer_tool
+class DBSCANAutoFacetTool(SKLAutoFacetTool):
+    icon = 'glue_rainbow'  # TODO: Figure out how to add an icon
+    tool_id = 'scatter3d:facet_dbscan'
+    action_text = 'Automatically facet a data layer'
+    
+    def __init__(self, viewer):
+        super(DBSCANAutoFacetTool, self).__init__(viewer, DBSCAN, None)
 
-        # If the layer artist is for a Subset not Data, pick the first Data
-        # one instead (where the layer artist is a 3d scatter artist)
-        if isinstance(layer_artist.layer, Subset):
-            for layer_artist in self.iter_data_layer_artists():
-                if isinstance(layer_artist, ScatterLayerArtist):
-                    break
-            else:
-                return
-
-        data = layer_artist.layer
-        input_data = self._input_data(data)
-        labels = self._facets(input_data)
-        subset_count = np.max(labels) + 1
-        data.add_component(labels, self.facet_component)
-        subsets = facet_subsets(self.viewer._data, cid=data.id[self.facet_component], steps=subset_count)
-        colorize_subsets(subsets, matplotlib.cm.get_cmap("plasma"))
+    # Dummy for now
+    def _get_params(self):
+        return {
+            "eps": 2.5,
+            "min_samples": 2
+        }
