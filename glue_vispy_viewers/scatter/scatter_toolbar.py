@@ -80,16 +80,34 @@ class PointSelectionMode(VispyMouseMode):
 
 
 @viewer_tool
-class AutoSegmentMode(Tool):
+class DBSCANAutoFacetTool(Tool):
     icon = 'glue_rainbow'  # TODO: Figure out how to add an icon
     tool_id = 'scatter3d:autoseg'
-    action_text = 'Automatically segment points'
+    action_text = 'Automatically facet a data layer'
+    facet_component = "_facet_labels"
 
     def __init__(self, viewer):
-        super(AutoSegmentMode, self).__init__(viewer)
+        super(DBSCANAutoFacetTool, self).__init__(viewer)
 
     def deactivate(self):
         pass
+
+    def _input_data(self, data):
+        viewer_state = self.viewer.state
+        input_data = np.array([
+            data[viewer_state.x_att],
+            data[viewer_state.y_att],
+            data[viewer_state.z_att]]
+        ).transpose()
+        return input_data
+
+    @staticmethod
+    def _facet(input_data, **kwargs):
+        method = DBSCAN  # Later, make this an option
+        params = dict(eps=2.5, min_samples=2)
+        model = method(**params)
+        model.fit(input_data)
+        return model.labels_
 
     def activate(self):
 
@@ -108,19 +126,9 @@ class AutoSegmentMode(Tool):
                 return
 
         data = layer_artist.layer
-        viewer_state = self.viewer.state
-        input_data = DataFrame({
-            'x': data[viewer_state.x_att],
-            'y': data[viewer_state.y_att],
-            'z': data[viewer_state.z_att]
-        })
-
-        method = DBSCAN  # Later, make this an option
-        params = dict(eps=2.5, min_samples=2)
-        model = method(**params)
-        model.fit(input_data)
-        subset_count = np.max(model.labels_) + 1
-
-        data.add_component(model.labels_, "_autoseg_labels")
-        subsets = facet_subsets(self.viewer._data, cid=data.id["_autoseg_labels"], steps=subset_count)
+        input_data = self._input_data(data)
+        labels = self._facet(input_data)
+        subset_count = np.max(labels) + 1
+        data.add_component(labels, self.facet_component)
+        subsets = facet_subsets(self.viewer._data, cid=data.id[self.facet_component], steps=subset_count)
         colorize_subsets(subsets, matplotlib.cm.get_cmap("plasma"))
