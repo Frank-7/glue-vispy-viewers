@@ -1,6 +1,5 @@
-"""
-This is for 3D selection in Glue 3d scatter plot viewer.
-"""
+from dataclasses import dataclass
+
 import matplotlib.cm
 import numpy as np
 from sklearn.cluster import DBSCAN, OPTICS
@@ -12,6 +11,7 @@ from glue.viewers.common.tool import Tool
 from glue.core.util import colorize_subsets, facet_subsets
 
 from .layer_artist import ScatterLayerArtist
+from .segmentation_tool_dialog import SegmentationToolDialog
 from ..common.selection_tools import VispyMouseMode
 
 
@@ -77,17 +77,23 @@ class PointSelectionMode(VispyMouseMode):
 
 
 class BaseAutoFacetTool(Tool):
-    facet_component = "_facet_labels"
+    facet_component = '_facet_labels'
+
+    params = {}
+    style = {}
 
     def _input_data(self, data):
         raise NotImplementedError()
 
-    def _facets(self, input_data, **kwargs):
+    def _facets(self, data, params):
+        raise NotImplementedError()
+
+    def _get_info(self):
         raise NotImplementedError()
 
     def activate(self):
 
-        # Get the values of the currently active layer artist - we
+        # Get the params of the currently active layer artist - we
         # specifically pick the layer artist that is selected in the layer
         # artist view in the left since we have to pick one.
         layer_artist = self.viewer._view.layer_list.current_artist()
@@ -103,19 +109,34 @@ class BaseAutoFacetTool(Tool):
                 return
 
         data = layer_artist.layer
-        labels = self._facets(data)
+        result = self._get_info()
+        if not result:
+            return
+        parameter_values = {k: v.value for k, v in self.params.items()}
+        labels = self._facets(data, parameter_values)
         subset_count = np.max(labels) + 1
-        data.add_component(labels, self.facet_component)
+        components = [x.label for x in data.components]
+        if self.facet_component in components:
+            data.update_components({data.id[self.facet_component]: labels})
+        else:
+            data.add_component(labels, self.facet_component)
         subsets = facet_subsets(self.viewer._data, cid=data.id[self.facet_component], steps=subset_count)
-        colorize_subsets(subsets, matplotlib.cm.get_cmap("plasma"))
+        colorize_subsets(subsets, self.style["cmap"])
+
+
+@dataclass
+class SegmentationParameterInfo:
+    name: str
+    type: type
+    value: int | float | bool
 
 
 class SKLAutoFacetTool(BaseAutoFacetTool):
+    style = {'cmap': matplotlib.cm.get_cmap("gray")}
 
-    def __init__(self, viewer, model_cls, dialog_cls):
+    def __init__(self, viewer, model_cls):
         super(SKLAutoFacetTool, self).__init__(viewer)
         self._model_cls = model_cls
-        self._dialog_cls = dialog_cls
 
     def _input_data(self, data):
         viewer_state = self.viewer.state
@@ -126,15 +147,12 @@ class SKLAutoFacetTool(BaseAutoFacetTool):
         ).transpose()
         return input_data
 
-    def _get_params(self):
-        params = {}
-        dialog = self._dialog_cls(params)
-        dialog.exec_()
-        return params
+    def _get_info(self):
+        dialog = SegmentationToolDialog(self.params, self.style, self.viewer._data)
+        return dialog.exec_()
 
-    def _facets(self, data, **kwargs):
+    def _facets(self, data, params):
         input_data = self._input_data(data)
-        params = self._get_params()
         model = self._model_cls(**params)
         model.fit(input_data)
         return model.labels_
@@ -145,13 +163,11 @@ class DBSCANAutoFacetTool(SKLAutoFacetTool):
     icon = 'glue_rainbow'  # TODO: Figure out how to add an icon
     tool_id = 'scatter3d:facet_dbscan'
     action_text = 'Automatically facet a data layer'
+
+    params = {
+        'eps': SegmentationParameterInfo(name='Epsilon', type=float, value=2.5),
+        'min_samples': SegmentationParameterInfo(name='Min Samples', type=int, value=2)
+    }
     
     def __init__(self, viewer):
-        super(DBSCANAutoFacetTool, self).__init__(viewer, DBSCAN, None)
-
-    # Dummy for now
-    def _get_params(self):
-        return {
-            "eps": 2.5,
-            "min_samples": 2
-        }
+        super(DBSCANAutoFacetTool, self).__init__(viewer, DBSCAN)
