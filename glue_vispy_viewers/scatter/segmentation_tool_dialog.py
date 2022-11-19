@@ -39,8 +39,7 @@ class SegmentationToolDialog(QDialog):
                           directory=os.path.dirname(__file__))
 
         self._connections = autoconnect_callbacks_to_qt(self.state, self.ui)
-        if "cmap" in options:
-            self.state.cmap = options["cmap"]
+        self.state.update_from_dict(options)
 
         self.ui.button_ok.clicked.connect(self.accept)
         self.ui.button_cancel.clicked.connect(self.reject)
@@ -53,9 +52,9 @@ class SegmentationToolDialog(QDialog):
 
     @staticmethod
     def validator(t):
-        if t == int:
+        if t is int:
             return QIntValidator()
-        elif t == float:
+        elif t is float:
             return QDoubleValidator()
 
     def _populate_form(self, params):
@@ -64,7 +63,7 @@ class SegmentationToolDialog(QDialog):
 
         for key, info in params.items():
             t = type(info.value)
-            if t == bool:
+            if t is bool:
                 widget = QCheckBox()
                 widget.setChecked(info.value)
             else:
@@ -102,8 +101,7 @@ class SegmentationToolDialog(QDialog):
                 self.set_error_message(error_message)
                 return
 
-        cmap = self.state.cmap
-        if cmap is None:
+        if self.state.cmap is None:
             self.set_error_message("You must select a colormap")
             return
 
