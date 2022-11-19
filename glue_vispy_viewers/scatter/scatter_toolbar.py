@@ -1,16 +1,15 @@
 from dataclasses import dataclass
+import os
 
 import matplotlib.cm
 import numpy as np
 from sklearn.cluster import DBSCAN, OPTICS
 
 from glue.config import viewer_tool
-from glue.core import Data, Subset
 from glue.core.roi import Roi, Projected3dROI
 from glue.viewers.common.tool import Tool
 from glue.core.util import colorize_subsets, facet_subsets
 
-from .layer_artist import ScatterLayerArtist
 from .segmentation_tool_dialog import SegmentationToolDialog
 from ..common.selection_tools import VispyMouseMode
 
@@ -145,7 +144,7 @@ class SKLAutoFacetTool(BaseAutoFacetTool):
 
 @viewer_tool
 class DBSCANAutoFacetTool(SKLAutoFacetTool):
-    icon = 'glue_rainbow'  # TODO: Figure out how to add an icon
+    icon = os.path.abspath(os.path.join(os.path.dirname(__file__), 'auto_seg_cloud_points.png'))
     tool_id = 'scatter3d:facet_dbscan'
     action_text = 'Automatically facet a data layer'
 
