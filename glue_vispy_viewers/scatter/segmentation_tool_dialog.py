@@ -63,15 +63,14 @@ class SegmentationToolDialog(QDialog):
         widgets = {}
 
         for key, info in params.items():
-            t = info.type
-            v = info.value
+            t = type(info.value)
             if t == bool:
                 widget = QCheckBox()
-                widget.setChecked(v)
+                widget.setChecked(info.value)
             else:
                 widget = QLineEdit()
                 widget.setValidator(self.validator(t))
-                widget.setText(str(v))
+                widget.setText(str(info.value))
             widgets[key] = widget
 
             title = info.name

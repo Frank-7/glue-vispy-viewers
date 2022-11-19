@@ -111,7 +111,6 @@ class BaseAutoFacetTool(Tool):
 @dataclass
 class SegmentationParameterInfo:
     name: str
-    type: type
     value: int | float | bool
 
 
@@ -149,8 +148,8 @@ class DBSCANAutoFacetTool(SKLAutoFacetTool):
     action_text = 'Automatically facet a data layer'
 
     params = {
-        'eps': SegmentationParameterInfo(name='Epsilon', type=float, value=2.5),
-        'min_samples': SegmentationParameterInfo(name='Min Samples', type=int, value=2)
+        'eps': SegmentationParameterInfo(name='Epsilon', value=2.5),
+        'min_samples': SegmentationParameterInfo(name='Min Samples', value=2)
     }
     
     def __init__(self, viewer):
