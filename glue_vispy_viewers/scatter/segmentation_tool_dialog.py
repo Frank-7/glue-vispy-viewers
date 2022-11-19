@@ -19,7 +19,6 @@ from qtpy.QtGui import QIntValidator, QDoubleValidator, QPalette
 class SegmentationToolState(State):
 
     data = SelectionCallbackProperty()
-    methods = SelectionCallbackProperty()
     cmap = CallbackProperty(get_cmap("gray"))
 
     def __init__(self, data_collection=None):
@@ -30,7 +29,7 @@ class SegmentationToolState(State):
 class SegmentationToolDialog(QDialog):
 
 
-    def __init__(self, params, style, data_collection=None, parent=None):
+    def __init__(self, params, options, data_collection=None, parent=None):
 
         super(SegmentationToolDialog, self).__init__(parent=parent)
 
@@ -40,15 +39,15 @@ class SegmentationToolDialog(QDialog):
                           directory=os.path.dirname(__file__))
 
         self._connections = autoconnect_callbacks_to_qt(self.state, self.ui)
-        if "cmap" in style:
-            self.state.cmap = style["cmap"]
+        if "cmap" in options:
+            self.state.cmap = options["cmap"]
 
         self.ui.button_ok.clicked.connect(self.accept)
         self.ui.button_cancel.clicked.connect(self.reject)
         palette = QPalette()
         palette.setColor(QPalette.WindowText, Qt.red)
         self.ui.error_label.setPalette(palette)
-        self.style = style
+        self.options = options
         self.params = params
         self.widgets = self._populate_form(params)
 
@@ -109,6 +108,6 @@ class SegmentationToolDialog(QDialog):
             self.set_error_message("You must select a colormap")
             return
 
-        self.style['cmap'] = cmap
+        self.options.update(self.state.as_dict())
 
         super(SegmentationToolDialog, self).accept()

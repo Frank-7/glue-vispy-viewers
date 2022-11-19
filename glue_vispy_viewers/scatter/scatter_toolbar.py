@@ -80,7 +80,7 @@ class BaseAutoFacetTool(Tool):
     facet_component = '_facet_labels'
 
     params = {}
-    style = {}
+    options = {}
 
     def _input_data(self, data):
         raise NotImplementedError()
@@ -132,7 +132,7 @@ class SegmentationParameterInfo:
 
 
 class SKLAutoFacetTool(BaseAutoFacetTool):
-    style = {'cmap': matplotlib.cm.get_cmap("gray")}
+    options = {'cmap': matplotlib.cm.get_cmap("gray")}
 
     def __init__(self, viewer, model_cls):
         super(SKLAutoFacetTool, self).__init__(viewer)
@@ -148,7 +148,7 @@ class SKLAutoFacetTool(BaseAutoFacetTool):
         return input_data
 
     def _get_info(self):
-        dialog = SegmentationToolDialog(self.params, self.style, self.viewer._data)
+        dialog = SegmentationToolDialog(self.params, self.options, self.viewer._data)
         return dialog.exec_()
 
     def _facets(self, data, params):
