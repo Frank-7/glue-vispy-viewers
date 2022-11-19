@@ -93,25 +93,10 @@ class BaseAutoFacetTool(Tool):
 
     def activate(self):
 
-        # Get the params of the currently active layer artist - we
-        # specifically pick the layer artist that is selected in the layer
-        # artist view in the left since we have to pick one.
-        layer_artist = self.viewer._view.layer_list.current_artist()
-
-        # If the layer artist is for a Subset not Data, pick the first Data
-        # one instead (where the layer artist is a 3d scatter artist)
-        if isinstance(layer_artist.layer, Subset):
-            for layer_artist in self.viewer._layer_artist_container:
-                if isinstance(layer_artist.layer, Data) and \
-                   isinstance(layer_artist, ScatterLayerArtist):
-                    break
-            else:
-                return
-
-        data = layer_artist.layer
         result = self._get_info()
         if not result:
             return
+        data = self.options["data"]
         parameter_values = {k: v.value for k, v in self.params.items()}
         labels = self._facets(data, parameter_values)
         subset_count = np.max(labels) + 1
@@ -121,7 +106,7 @@ class BaseAutoFacetTool(Tool):
         else:
             data.add_component(labels, self.facet_component)
         subsets = facet_subsets(self.viewer._data, cid=data.id[self.facet_component], steps=subset_count)
-        colorize_subsets(subsets, self.style["cmap"])
+        colorize_subsets(subsets, self.options["cmap"])
 
 
 @dataclass

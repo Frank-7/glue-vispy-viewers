@@ -16,13 +16,13 @@ from qtpy.QtWidgets import QCheckBox, QLineEdit, QHBoxLayout, QLabel
 from qtpy.QtGui import QIntValidator, QDoubleValidator, QPalette
 
 
-class SegmentationToolState(State):
+class SegmentationDialogState(State):
 
     data = SelectionCallbackProperty()
     cmap = CallbackProperty(get_cmap("gray"))
 
     def __init__(self, data_collection=None):
-        super(SegmentationToolState, self).__init__()
+        super(SegmentationDialogState, self).__init__()
         self.data_helper = DataCollectionComboHelper(self, 'data', data_collection)
 
 
@@ -33,7 +33,7 @@ class SegmentationToolDialog(QDialog):
 
         super(SegmentationToolDialog, self).__init__(parent=parent)
 
-        self.state = SegmentationToolState(data_collection=data_collection)
+        self.state = SegmentationDialogState(data_collection=data_collection)
 
         self.ui = load_ui('segmentation_tool.ui', self,
                           directory=os.path.dirname(__file__))
