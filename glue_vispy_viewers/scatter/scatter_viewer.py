@@ -16,7 +16,7 @@ class VispyScatterViewer(BaseVispyViewer):
 
     tools = BaseVispyViewer.tools + ['vispy:lasso', 'vispy:rectangle',
                                      'vispy:circle', 'scatter3d:point',
-                                     'scatter3d:facet_dbscan']
+                                     'scatter3d:autofacet']
 
     _data_artist_cls = ScatterLayerArtist
     _subset_artist_cls = ScatterLayerArtist

@@ -3,15 +3,18 @@ import os
 
 import matplotlib.cm
 import numpy as np
+from qtpy.QtWidgets import QAction
 from sklearn.cluster import DBSCAN, OPTICS
 
 from glue.config import viewer_tool
 from glue.core.roi import Roi, Projected3dROI
-from glue.viewers.common.tool import Tool
+from glue.viewers.common.tool import Tool, SimpleToolMenu, DropdownTool
 from glue.core.util import colorize_subsets, facet_subsets
 
 from .segmentation_tool_dialog import SegmentationToolDialog
 from ..common.selection_tools import VispyMouseMode
+
+AUTOFACET_ICON = os.path.abspath(os.path.join(os.path.dirname(__file__), 'auto_seg_cloud_points.png'))
 
 
 class NearestNeighborROI(Roi):
@@ -75,29 +78,80 @@ class PointSelectionMode(VispyMouseMode):
         pass
 
 
-class BaseAutoFacetTool(Tool):
+@dataclass
+class SegmentationParameterInfo:
+    name: str
+    value: int | float | bool
+
+
+class BaseAutoFaceter:
+
+    def input_data(self, data, viewer_state):
+        input_data = np.array([
+            data[viewer_state.x_att],
+            data[viewer_state.y_att],
+            data[viewer_state.z_att]]
+        ).transpose()
+        return input_data
+
+    def facets(self, data, viewer_state, params):
+        raise NotImplementedError()
+
+
+class SKLAutoFaceter(BaseAutoFaceter):
+
+    def __init__(self, model_cls):
+        super(SKLAutoFaceter, self).__init__()
+        self._model_cls = model_cls
+
+    def facets(self, data, viewer_state, params):
+        input_data = self.input_data(data, viewer_state)
+        model = self._model_cls(**params)
+        model.fit(input_data)
+        return model.labels_
+
+
+class DBSCANAutoFaceter(SKLAutoFaceter):
+    action_text = 'DBSCAN'
+
+    params = {
+        'eps': SegmentationParameterInfo(name='Epsilon', value=2.5),
+        'min_samples': SegmentationParameterInfo(name='Min Samples', value=2)
+    }
+
+    def __init__(self):
+        super(DBSCANAutoFaceter, self).__init__(DBSCAN)
+
+
+@viewer_tool
+class AutoFacetTool(DropdownTool):
+    icon = AUTOFACET_ICON
+    tool_id = 'scatter3d:autofacet'
     facet_component = '_facet_labels'
 
-    params = {}
-    options = {}
+    options = {'cmap': matplotlib.cm.get_cmap("gray")}
+    faceters = {"DBSCAN": DBSCANAutoFaceter()}
 
-    def _input_data(self, data):
-        raise NotImplementedError()
+    def get_info(self, model):
+        dialog = SegmentationToolDialog(model.params, self.options, self.viewer._data)
+        return dialog.exec_()
 
-    def _facets(self, data, params):
-        raise NotImplementedError()
+    def menu_actions(self):
+        actions = []
+        for name, faceter in self.faceters.items():
+            action = QAction(name)
+            action.triggered.connect(lambda: self.facet(faceter))
+            actions.append(action)
+        return actions
 
-    def _get_info(self):
-        raise NotImplementedError()
+    def facet(self, faceter):
 
-    def activate(self):
-
-        result = self._get_info()
+        result = self.get_info(faceter)
         if not result:
             return
         data = self.options["data"]
-        parameter_values = {k: v.value for k, v in self.params.items()}
-        labels = self._facets(data, parameter_values)
+        parameter_values = {k: v.value for k, v in faceter.params.items()}
+        labels = faceter.facets(data, self.viewer.state, parameter_values)
         subset_count = np.max(labels) + 1
         components = [x.label for x in data.components]
         if self.facet_component in components:
@@ -107,50 +161,3 @@ class BaseAutoFacetTool(Tool):
         subsets = facet_subsets(self.viewer._data, cid=data.id[self.facet_component], steps=subset_count)
         colorize_subsets(subsets, self.options["cmap"])
 
-
-@dataclass
-class SegmentationParameterInfo:
-    name: str
-    value: int | float | bool
-
-
-class SKLAutoFacetTool(BaseAutoFacetTool):
-    options = {'cmap': matplotlib.cm.get_cmap("gray")}
-
-    def __init__(self, viewer, model_cls):
-        super(SKLAutoFacetTool, self).__init__(viewer)
-        self._model_cls = model_cls
-
-    def _input_data(self, data):
-        viewer_state = self.viewer.state
-        input_data = np.array([
-            data[viewer_state.x_att],
-            data[viewer_state.y_att],
-            data[viewer_state.z_att]]
-        ).transpose()
-        return input_data
-
-    def _get_info(self):
-        dialog = SegmentationToolDialog(self.params, self.options, self.viewer._data)
-        return dialog.exec_()
-
-    def _facets(self, data, params):
-        input_data = self._input_data(data)
-        model = self._model_cls(**params)
-        model.fit(input_data)
-        return model.labels_
-
-
-@viewer_tool
-class DBSCANAutoFacetTool(SKLAutoFacetTool):
-    icon = os.path.abspath(os.path.join(os.path.dirname(__file__), 'auto_seg_cloud_points.png'))
-    tool_id = 'scatter3d:facet_dbscan'
-    action_text = 'Automatically facet a data layer'
-
-    params = {
-        'eps': SegmentationParameterInfo(name='Epsilon', value=2.5),
-        'min_samples': SegmentationParameterInfo(name='Min Samples', value=2)
-    }
-    
-    def __init__(self, viewer):
-        super(DBSCANAutoFacetTool, self).__init__(viewer, DBSCAN)
