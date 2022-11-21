@@ -21,6 +21,7 @@ class SegmentationDialogState(State):
 
     data = SelectionCallbackProperty()
     cmap = CallbackProperty(get_cmap("gray"))
+    reverse_cmap = CallbackProperty()
     component = CallbackProperty()
 
     def __init__(self, data_collection=None):
@@ -39,8 +40,6 @@ class SegmentationToolDialog(QDialog):
         self.ui = load_ui('segmentation_tool.ui', self,
                           directory=os.path.dirname(__file__))
         add_callback(self.state, 'component', self._component_warn)
-        self.ui.component_warning_label.hide()
-        self._component_warn(self.state.component)
 
         self._connections = autoconnect_callbacks_to_qt(self.state, self.ui)
         self.state.update_from_dict(options)
@@ -57,7 +56,6 @@ class SegmentationToolDialog(QDialog):
         self.params = faceter.params
         self.widgets = self._populate_form(self.params)
         self.ui.setWindowTitle(f"{faceter.name} Facet")
-        self.ui.adjustSize()
 
     @staticmethod
     def validator(t):
@@ -68,13 +66,7 @@ class SegmentationToolDialog(QDialog):
 
     def _component_warn(self, component):
         components = [c.label for c in self.state.data.components]
-        visible = self.ui.component_warning_label.isVisible()
-        if (component in components) ^ visible:
-            if visible:
-                self.ui.component_warning_label.hide()
-            else:
-                self.ui.component_warning_label.show()
-            self.ui.adjustSize()
+        self.ui.component_warning_label.setVisible(component in components)
 
     def _populate_form(self, params):
 

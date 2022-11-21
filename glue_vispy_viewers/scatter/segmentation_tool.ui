@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>344</width>
-    <height>327</height>
+    <width>299</width>
+    <height>354</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -19,7 +19,7 @@
   <property name="windowTitle">
    <string>Subset Facet</string>
   </property>
-  <layout class="QFormLayout" name="formLayout">
+  <layout class="QVBoxLayout" name="verticalLayout">
    <property name="sizeConstraint">
     <enum>QLayout::SetMinimumSize</enum>
    </property>
@@ -35,7 +35,7 @@
    <property name="bottomMargin">
     <number>4</number>
    </property>
-   <item row="0" column="0" colspan="2">
+   <item>
     <widget class="QLabel" name="datasets_label">
      <property name="sizePolicy">
       <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
@@ -51,17 +51,14 @@
      </property>
     </widget>
    </item>
-   <item row="1" column="0" colspan="2">
+   <item>
     <widget class="QComboBox" name="combosel_data">
      <property name="sizeAdjustPolicy">
       <enum>QComboBox::AdjustToMinimumContentsLength</enum>
      </property>
     </widget>
    </item>
-   <item row="2" column="0">
-    <layout class="QHBoxLayout" name="horizontalLayout_5"/>
-   </item>
-   <item row="3" column="0" colspan="2">
+   <item>
     <widget class="QLabel" name="component_label">
      <property name="text">
       <string>Facet label component</string>
@@ -71,7 +68,7 @@
      </property>
     </widget>
    </item>
-   <item row="4" column="0" colspan="2">
+   <item>
     <widget class="QLabel" name="component_warning_label">
      <property name="enabled">
       <bool>true</bool>
@@ -91,10 +88,10 @@ If used, its values will be overwritten.</string>
      </property>
     </widget>
    </item>
-   <item row="5" column="0" colspan="2">
+   <item>
     <widget class="QLineEdit" name="text_component"/>
    </item>
-   <item row="6" column="0" colspan="2">
+   <item>
     <widget class="QLabel" name="parameters_label">
      <property name="sizePolicy">
       <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
@@ -113,10 +110,10 @@ If used, its values will be overwritten.</string>
      </property>
     </widget>
    </item>
-   <item row="8" column="0">
+   <item>
     <layout class="QFormLayout" name="form_layout"/>
    </item>
-   <item row="11" column="0" colspan="2">
+   <item>
     <layout class="QHBoxLayout" name="horizontalLayout" stretch="2,4">
      <item>
       <widget class="QLabel" name="label_2">
@@ -134,7 +131,21 @@ If used, its values will be overwritten.</string>
      </item>
     </layout>
    </item>
-   <item row="12" column="0" colspan="2">
+   <item>
+    <layout class="QHBoxLayout" name="horizontalLayout_2">
+     <item>
+      <widget class="QCheckBox" name="bool_reverse_cmap">
+       <property name="layoutDirection">
+        <enum>Qt::RightToLeft</enum>
+       </property>
+       <property name="text">
+        <string>Reverse</string>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </item>
+   <item>
     <widget class="QLabel" name="error_label">
      <property name="sizePolicy">
       <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
@@ -153,7 +164,7 @@ If used, its values will be overwritten.</string>
      </property>
     </widget>
    </item>
-   <item row="13" column="0" colspan="2">
+   <item>
     <layout class="QHBoxLayout" name="horizontalLayout_6">
      <item>
       <spacer name="horizontalSpacer">

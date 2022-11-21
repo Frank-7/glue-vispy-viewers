@@ -8,8 +8,9 @@ from sklearn.cluster import DBSCAN, OPTICS
 
 from glue.config import viewer_tool
 from glue.core.roi import Roi, Projected3dROI
-from glue.viewers.common.tool import Tool, SimpleToolMenu, DropdownTool
+from glue.viewers.common.tool import DropdownTool
 from glue.core.util import colorize_subsets, facet_subsets
+from glue.utils import nonpartial
 
 from .segmentation_tool_dialog import SegmentationToolDialog
 from ..common.selection_tools import VispyMouseMode
@@ -143,7 +144,7 @@ class AutoFacetTool(DropdownTool):
         actions = []
         for faceter in self.faceters:
             action = QAction(faceter.name)
-            action.triggered.connect(lambda: self.facet(faceter))
+            action.triggered.connect(nonpartial(self.facet, faceter))
             actions.append(action)
         return actions
 
@@ -163,5 +164,8 @@ class AutoFacetTool(DropdownTool):
         else:
             data.add_component(labels, component_name)
         subsets = facet_subsets(self.viewer._data, cid=data.id[component_name], steps=subset_count)
-        colorize_subsets(subsets, self.options["cmap"])
+        cmap = self.options["cmap"]
+        if self.options["reverse_cmap"]:
+            cmap = cmap.reversed()
+        colorize_subsets(subsets, cmap)
 
