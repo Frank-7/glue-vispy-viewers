@@ -2,6 +2,7 @@ import os
 from qtpy.QtWidgets import QDialog
 from matplotlib.cm import get_cmap
 
+from echo import add_callback
 from glue.core.state_objects import State
 from glue.core.data_combo_helper import DataCollectionComboHelper
 from glue.external.echo import CallbackProperty, SelectionCallbackProperty
@@ -20,6 +21,7 @@ class SegmentationDialogState(State):
 
     data = SelectionCallbackProperty()
     cmap = CallbackProperty(get_cmap("gray"))
+    component = CallbackProperty()
 
     def __init__(self, data_collection=None):
         super(SegmentationDialogState, self).__init__()
@@ -28,8 +30,7 @@ class SegmentationDialogState(State):
 
 class SegmentationToolDialog(QDialog):
 
-
-    def __init__(self, params, options, data_collection=None, parent=None):
+    def __init__(self, faceter, options, data_collection=None, parent=None):
 
         super(SegmentationToolDialog, self).__init__(parent=parent)
 
@@ -37,18 +38,26 @@ class SegmentationToolDialog(QDialog):
 
         self.ui = load_ui('segmentation_tool.ui', self,
                           directory=os.path.dirname(__file__))
+        add_callback(self.state, 'component', self._component_warn)
+        self.ui.component_warning_label.hide()
+        self._component_warn(self.state.component)
 
         self._connections = autoconnect_callbacks_to_qt(self.state, self.ui)
         self.state.update_from_dict(options)
 
         self.ui.button_ok.clicked.connect(self.accept)
         self.ui.button_cancel.clicked.connect(self.reject)
+
         palette = QPalette()
         palette.setColor(QPalette.WindowText, Qt.red)
         self.ui.error_label.setPalette(palette)
+        self.ui.component_warning_label.setPalette(palette)
+
         self.options = options
-        self.params = params
-        self.widgets = self._populate_form(params)
+        self.params = faceter.params
+        self.widgets = self._populate_form(self.params)
+        self.ui.setWindowTitle(f"{faceter.name} Facet")
+        self.ui.adjustSize()
 
     @staticmethod
     def validator(t):
@@ -56,6 +65,16 @@ class SegmentationToolDialog(QDialog):
             return QIntValidator()
         elif t is float:
             return QDoubleValidator()
+
+    def _component_warn(self, component):
+        components = [c.label for c in self.state.data.components]
+        visible = self.ui.component_warning_label.isVisible()
+        if (component in components) ^ visible:
+            if visible:
+                self.ui.component_warning_label.hide()
+            else:
+                self.ui.component_warning_label.show()
+            self.ui.adjustSize()
 
     def _populate_form(self, params):
 
@@ -103,6 +122,10 @@ class SegmentationToolDialog(QDialog):
 
         if self.state.cmap is None:
             self.set_error_message("You must select a colormap")
+            return
+
+        if not self.state.component:
+            self.set_error_message("You must enter a name for the facet labels component")
             return
 
         self.options.update(self.state.as_dict())

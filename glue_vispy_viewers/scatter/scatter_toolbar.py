@@ -112,7 +112,7 @@ class SKLAutoFaceter(BaseAutoFaceter):
 
 
 class DBSCANAutoFaceter(SKLAutoFaceter):
-    action_text = 'DBSCAN'
+    name = 'DBSCAN'
 
     params = {
         'eps': SegmentationParameterInfo(name='Epsilon', value=2.5),
@@ -127,19 +127,22 @@ class DBSCANAutoFaceter(SKLAutoFaceter):
 class AutoFacetTool(DropdownTool):
     icon = AUTOFACET_ICON
     tool_id = 'scatter3d:autofacet'
-    facet_component = '_facet_labels'
 
-    options = {'cmap': matplotlib.cm.get_cmap("gray")}
-    faceters = {"DBSCAN": DBSCANAutoFaceter()}
+    options = {
+        'cmap': matplotlib.cm.get_cmap("gray"),
+        'component': '_facet_labels'
+    }
+    faceters = [DBSCANAutoFaceter()]
 
-    def get_info(self, model):
-        dialog = SegmentationToolDialog(model.params, self.options, self.viewer._data)
+    def get_info(self, faceter):
+        dialog = SegmentationToolDialog(faceter, self.options,
+                                        data_collection=self.viewer._data)
         return dialog.exec_()
 
     def menu_actions(self):
         actions = []
-        for name, faceter in self.faceters.items():
-            action = QAction(name)
+        for faceter in self.faceters:
+            action = QAction(faceter.name)
             action.triggered.connect(lambda: self.facet(faceter))
             actions.append(action)
         return actions
@@ -154,10 +157,11 @@ class AutoFacetTool(DropdownTool):
         labels = faceter.facets(data, self.viewer.state, parameter_values)
         subset_count = np.max(labels) + 1
         components = [x.label for x in data.components]
-        if self.facet_component in components:
-            data.update_components({data.id[self.facet_component]: labels})
+        component_name = self.options["component"]
+        if component_name in components:
+            data.update_components({data.id[component_name]: labels})
         else:
-            data.add_component(labels, self.facet_component)
-        subsets = facet_subsets(self.viewer._data, cid=data.id[self.facet_component], steps=subset_count)
+            data.add_component(labels, component_name)
+        subsets = facet_subsets(self.viewer._data, cid=data.id[component_name], steps=subset_count)
         colorize_subsets(subsets, self.options["cmap"])
 
