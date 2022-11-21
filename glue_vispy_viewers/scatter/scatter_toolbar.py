@@ -12,7 +12,7 @@ from glue.viewers.common.tool import DropdownTool
 from glue.core.util import colorize_subsets, facet_subsets
 from glue.utils import nonpartial
 
-from .segmentation_tool_dialog import SegmentationToolDialog
+from .autofacet_tool_dialog import SegmentationToolDialog
 from ..common.selection_tools import VispyMouseMode
 
 AUTOFACET_ICON = os.path.abspath(os.path.join(os.path.dirname(__file__), 'auto_seg_cloud_points.png'))
@@ -80,7 +80,7 @@ class PointSelectionMode(VispyMouseMode):
 
 
 @dataclass
-class SegmentationParameterInfo:
+class AutofacetParameter:
     name: str
     value: int | float | bool
 
@@ -116,8 +116,8 @@ class DBSCANAutoFaceter(SKLAutoFaceter):
     name = 'DBSCAN'
 
     params = {
-        'eps': SegmentationParameterInfo(name='Epsilon', value=2.5),
-        'min_samples': SegmentationParameterInfo(name='Min Samples', value=2)
+        'eps': AutofacetParameter(name='Epsilon', value=2.5),
+        'min_samples': AutofacetParameter(name='Min Samples', value=2)
     }
 
     def __init__(self):

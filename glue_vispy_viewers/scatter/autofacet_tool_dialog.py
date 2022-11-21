@@ -37,7 +37,7 @@ class SegmentationToolDialog(QDialog):
 
         self.state = SegmentationDialogState(data_collection=data_collection)
 
-        self.ui = load_ui('segmentation_tool.ui', self,
+        self.ui = load_ui('autofacet_tool.ui', self,
                           directory=os.path.dirname(__file__))
         add_callback(self.state, 'component', self._component_warn)
 
