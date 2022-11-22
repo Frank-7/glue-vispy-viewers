@@ -87,14 +87,6 @@ class AutofacetParameter:
 
 class BaseAutoFaceter:
 
-    def input_data(self, data, viewer_state):
-        input_data = np.array([
-            data[viewer_state.x_att],
-            data[viewer_state.y_att],
-            data[viewer_state.z_att]]
-        ).transpose()
-        return input_data
-
     def facets(self, data, viewer_state, params):
         raise NotImplementedError()
 
@@ -104,6 +96,14 @@ class SKLAutoFaceter(BaseAutoFaceter):
     def __init__(self, model_cls):
         super(SKLAutoFaceter, self).__init__()
         self._model_cls = model_cls
+
+    def input_data(self, data, viewer_state):
+        input_data = np.array([
+            data[viewer_state.x_att],
+            data[viewer_state.y_att],
+            data[viewer_state.z_att]]
+        ).transpose()
+        return input_data
 
     def facets(self, data, viewer_state, params):
         input_data = self.input_data(data, viewer_state)
