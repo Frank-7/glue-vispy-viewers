@@ -68,7 +68,8 @@ class KDEROI(Projected3dROI):
                 min_dist = dist
                 closest_pt = (x_sub[idx], y_sub[idx], z_sub[idx])
 
-        threshold = 0.01
+        threshold = 0.000001
+        # threshold = 0.01
         at_pt = self.kde(closest_pt)
         diff = self.overall - at_pt
         mask[self.indices] = np.abs(diff) < threshold

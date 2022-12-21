@@ -57,9 +57,9 @@ class NearestNeighborROI(Roi):
 @viewer_tool
 class PointSelectionMode(VispyMouseMode, HubListener):
 
-    icon = 'glue_cloud_points'
-    tool_id = 'scatter3d:cloud_point'
-    action_text = 'Select cloud points using a point selection'
+    icon = 'auto_seg_cloud_points'
+    tool_id = 'scatter3d:auto_seg_cloud_point'
+    action_text = 'Auto select cloud points using segmentation'
 
     def __init__(self, viewer):
         super(PointSelectionMode, self).__init__(viewer)
