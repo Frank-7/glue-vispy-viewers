@@ -112,6 +112,17 @@ class SKLAutoFaceter(BaseAutoFaceter):
         return model.labels_
 
 
+class OPTICSAutoFaceter(SKLAutoFaceter):
+    name = 'OPTICS'
+
+    params = {
+        'min_samples': AutofacetParameter(name='Min Samples', value=7)
+    }
+
+    def __init__(self):
+        super(OPTICSAutoFaceter, self).__init__(OPTICS)
+
+
 class DBSCANAutoFaceter(SKLAutoFaceter):
     name = 'DBSCAN'
 
@@ -133,7 +144,7 @@ class AutoFacetTool(DropdownTool):
         'cmap': matplotlib.cm.get_cmap("gray"),
         'component': '_facet_labels'
     }
-    faceters = [DBSCANAutoFaceter()]
+    faceters = [DBSCANAutoFaceter(),OPTICSAutoFaceter()]
 
     def get_info(self, faceter):
         dialog = SegmentationToolDialog(faceter, self.options,
