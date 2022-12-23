@@ -4,7 +4,7 @@ import os
 import matplotlib.cm
 import numpy as np
 from qtpy.QtWidgets import QAction
-from sklearn.cluster import DBSCAN, OPTICS
+from sklearn.cluster import DBSCAN, OPTICS, KMeans
 
 from glue.config import viewer_tool
 from glue.core.roi import Roi, Projected3dROI
@@ -112,17 +112,6 @@ class SKLAutoFaceter(BaseAutoFaceter):
         return model.labels_
 
 
-class OPTICSAutoFaceter(SKLAutoFaceter):
-    name = 'OPTICS'
-
-    params = {
-        'min_samples': AutofacetParameter(name='Min Samples', value=7)
-    }
-
-    def __init__(self):
-        super(OPTICSAutoFaceter, self).__init__(OPTICS)
-
-
 class DBSCANAutoFaceter(SKLAutoFaceter):
     name = 'DBSCAN'
 
@@ -135,6 +124,29 @@ class DBSCANAutoFaceter(SKLAutoFaceter):
         super(DBSCANAutoFaceter, self).__init__(DBSCAN)
 
 
+class OPTICSAutoFaceter(SKLAutoFaceter):
+    name = 'OPTICS'
+
+    params = {
+        'min_samples': AutofacetParameter(name='Min Samples', value=7)
+    }
+
+    def __init__(self):
+        super(OPTICSAutoFaceter, self).__init__(OPTICS)
+
+
+class KMEANSAutoFaceter(SKLAutoFaceter):
+    name = 'K-MEANS'
+
+    params = {
+        'n_clusters': AutofacetParameter(name='Number of Cluster', value=7),
+        'n_init': AutofacetParameter(name='Centroid Init', value=3),
+        'random_state': AutofacetParameter(name='Random State', value=77)
+    }
+
+    def __init__(self):
+        super(KMEANSAutoFaceter, self).__init__(KMeans)
+
 @viewer_tool
 class AutoFacetTool(DropdownTool):
     icon = AUTOFACET_ICON
@@ -144,7 +156,7 @@ class AutoFacetTool(DropdownTool):
         'cmap': matplotlib.cm.get_cmap("gray"),
         'component': '_facet_labels'
     }
-    faceters = [DBSCANAutoFaceter(),OPTICSAutoFaceter()]
+    faceters = [DBSCANAutoFaceter(), OPTICSAutoFaceter(), KMEANSAutoFaceter()]
 
     def get_info(self, faceter):
         dialog = SegmentationToolDialog(faceter, self.options,
